@@ -46,7 +46,7 @@ class HashTable:
         # Your code here
 
 
-    def fnv1(self, key):
+    def fnv1(self, key, seed=0):
         """
         FNV-1 Hash, 64-bit
 
@@ -54,6 +54,17 @@ class HashTable:
         """
 
         # Your code here
+        fnv_prime = 1099511628211
+        offset_basis = 14695981039346656037
+
+	    #FNV-1a Hash Function
+        hash = offset_basis + seed
+
+        for char in key:
+            hash = hash ^ ord(char)
+            hash = hash * fnv_prime
+        
+        return hash
 
 
     def djb2(self, key):
@@ -70,8 +81,8 @@ class HashTable:
         Take an arbitrary key and return a valid integer index
         between within the storage capacity of the hash table.
         """
-        #return self.fnv1(key) % self.capacity
-        return self.djb2(key) % self.capacity
+        return self.fnv1(key) % self.capacity
+        #return self.djb2(key) % self.capacity
 
     def put(self, key, value):
         """
