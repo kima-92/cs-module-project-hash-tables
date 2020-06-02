@@ -25,8 +25,10 @@ class HashTable:
 
     def __init__(self, capacity):
         self.capacity = capacity
+        self.resizingNewCapacity = 0
         self.itemsCount = 0
-        self.loadFactor = self.itemsCount / capacity
+        self.resizingCount = 0
+        self.loadFactor = self.itemsCount / self.capacity
 
         #self.table = [None] * capacity
         self.table = [LinkedList()] * capacity
@@ -47,7 +49,7 @@ class HashTable:
         """
         Return the load factor for this hash table.
         """
-        return self.loadFactor
+        return self.itemsCount / self.capacity
 
 
     def fnv1(self, key, seed=0):
@@ -84,6 +86,13 @@ class HashTable:
         return self.fnv1(key) % self.capacity
         #return self.djb2(key) % self.capacity
 
+    def hash_index_for_new_capacity(self, key):
+        """
+        Take an arbitrary key and return a valid integer index
+        between within the storage capacity of the NEW hash table.
+        """
+        return self.fnv1(key) % self.resizingNewCapacity
+
     def put(self, key, value):
         """
         Store the value with the given key.
@@ -104,7 +113,29 @@ class HashTable:
             # Add to the head of this LL
             #new_node = Node(key, value)
             ll.insert_at_head(key, value)
+            self.itemsCount += 1
 
+    def put_on_resized_table(self, key, value, resized_table, new_capacity):
+        """
+        Store the value with the given key.
+        Hash collisions should be handled with Linked List Chaining.
+        """
+        # Grab the slot were this item should be at
+        slot = self.hash_index_for_new_capacity(key)
+        # Grab the ll at this slot
+        ll = resized_table[slot]
+        # Try to grab that node with this key
+        node = ll.find(key)
+
+        # If this node exists ( it shouldn't)
+        #if node:
+            # Change the value
+            #node.value = value
+        # If it doesn't
+        #else:
+            # Add to the head of this LL
+        ll.insert_at_head(key, value)
+        self.resizingCount += 1
 
     def delete(self, key):
         """
@@ -118,11 +149,10 @@ class HashTable:
 
         if node:
             ll.delete(key)
+            self.itemsCount -= 1
             return node
         else:
             return None
-            #print(f"No items with the key {key} to erase")
-
 
     def get(self, key):
         """
@@ -138,25 +168,42 @@ class HashTable:
         else:
             return None
 
+    def check_if_table_needs_to_resize(self):
+        # Check if the table needs to be resized
+        if self.loadFactor > 0.7 and self.loadFactor < 0.2:
+            # If it has too much items
+            if self.loadFactor > 0.7:
+                # Make the table bigger
+                self.resizingNewCapacity = self.capacity * 2
+                self.resize(self.resizingNewCapacity)
+
 
     def resize(self, new_capacity):
+        new_table = [LinkedList()] * new_capacity
         """
         Changes the capacity of the hash table and
         rehashes all key/value pairs.
-
-        Implement this.
-        
-
-        #new_table = []
-        
+        """
+        # Set resizingNewCapacity
+        self.resizingNewCapacity = new_capacity
+        # For each LL in the old table
+        for ll in self.table:
+            # Save the head in node
+            node = ll.head
+            # While node is not epty
+            while node:
+                # put this node in the new table
+                self.put_on_resized_table(node.key, node.value, new_table, new_capacity)
+                # Set node as the next node
+                node = node.next
+        # Set our Table as the resized table        
+        self.table = new_table
+        # Set item count
+        self.itemsCount = self.resizingCount
+        self.resizingCount = 0
+        # Set capacity
         self.capacity = new_capacity
-
-        for item in self.table:
-            if item != None:
-                item_saved = item
-                self.delete(item.key)
-                self.put(item_saved.key)
-                """
+        self.resizingNewCapacity = 0       
 
 
 
