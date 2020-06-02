@@ -1,3 +1,6 @@
+from linked_list import LinkedList
+from linked_list import Node
+
 class HashTableEntry:
     """
     Linked List hash table key/value pair
@@ -22,7 +25,11 @@ class HashTable:
 
     def __init__(self, capacity):
         self.capacity = capacity
-        self.table = [None] * capacity
+        self.itemsCount = 0
+        self.loadFactor = self.itemsCount / capacity
+
+        #self.table = [None] * capacity
+        self.table = [LinkedList()] * capacity
 
 
     def get_num_slots(self):
@@ -32,8 +39,6 @@ class HashTable:
         but the number of slots in the main list.)
 
         One of the tests relies on this.
-
-        Implement this.
         """
         return self.capacity
 
@@ -41,10 +46,8 @@ class HashTable:
     def get_load_factor(self):
         """
         Return the load factor for this hash table.
-
-        Implement this.
         """
-        # Your code here
+        return self.loadFactor
 
 
     def fnv1(self, key, seed=0):
@@ -72,8 +75,6 @@ class HashTable:
 
         Implement this, and/or FNV-1.
         """
-        # Your code here
-
 
     def hash_index(self, key):
         """
@@ -87,10 +88,22 @@ class HashTable:
         """
         Store the value with the given key.
         Hash collisions should be handled with Linked List Chaining.
-        Implement this.
         """
+        # Grab the slot were this item should be at
         slot = self.hash_index(key)
-        self.table[slot] = value
+        # Grab the ll at this slot
+        ll = self.table[slot]
+        # Try to grab that node with this key
+        node = ll.find(key)
+        # If this node exists
+        if node:
+            # Change the value
+            node.value = value
+        # If it doesn't
+        else:
+            # Add to the head of this LL
+            #new_node = Node(key, value)
+            ll.insert_at_head(key, value)
 
 
     def delete(self, key):
@@ -100,21 +113,30 @@ class HashTable:
         Implement this.
         """
         slot = self.hash_index(key)
-        
-        if self.table[slot]:
-            self.table[slot] = None
+        ll = self.table[slot]
+        node = ll.find(key)
+
+        if node:
+            ll.delete(key)
+            return node
         else:
-            print(f"No items with the key {key} to erase")
+            return None
+            #print(f"No items with the key {key} to erase")
 
 
     def get(self, key):
         """
         Retrieve the value stored with the given key.
         Returns None if the key is not found.
-        Implement this.
         """
         slot = self.hash_index(key)
-        return self.table[slot]
+        ll = self.table[slot]
+        node = ll.find(key)
+
+        if node:
+            return node.value
+        else:
+            return None
 
 
     def resize(self, new_capacity):
@@ -123,17 +145,18 @@ class HashTable:
         rehashes all key/value pairs.
 
         Implement this.
-        """
+        
 
         #new_table = []
         
-        #self.capacity = new_capacity
+        self.capacity = new_capacity
 
-        #for item in self.table:
-         #   if item != None:
-          #      item_saved = item
-           #     self.delete(item.key)
-            #    self.put(item_saved.key)
+        for item in self.table:
+            if item != None:
+                item_saved = item
+                self.delete(item.key)
+                self.put(item_saved.key)
+                """
 
 
 
